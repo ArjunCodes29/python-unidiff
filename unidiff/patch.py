@@ -344,7 +344,35 @@ class PatchedFile(list):
             # stop parsing if we got past expected number of lines
             if (source_line_no > expected_source_end or
                     target_line_no > expected_target_end):
-                raise UnidiffParseError('Hunk is longer than expected')
+                # Check if the extra lines are whitespace lines
+                extra_lines = []
+                while (source_line_no > expected_source_end or
+                    target_line_no > expected_target_end):
+                    if diff_line_no < len(diff):
+                        _, line = diff[diff_line_no]
+                        if encoding is not None:
+                            line = line.decode(encoding)
+                        if line.strip() == '':
+                            extra_lines.append((diff_line_no, line))
+                            diff_line_no += 1
+                        else:
+                            break
+                    else:
+                        break
+
+                # Calculate the number of extra lines to remove
+                extra_source_lines = source_line_no - expected_source_end
+                extra_target_lines = target_line_no - expected_target_end
+                total_extra_lines = extra_source_lines + extra_target_lines
+
+                if len(extra_lines) >= total_extra_lines:
+                    # Remove only the necessary number of whitespace lines
+                    for i in range(total_extra_lines):
+                        line_no, _ = extra_lines[i]
+                        diff = diff[:line_no] + diff[line_no+1:]
+                    return self._parse_hunk(header, enumerate(diff, start=1), encoding, metadata_only)
+                else:
+                    raise UnidiffParseError('Hunk is longer than expected')
 
             if original_line:
                 original_line.diff_line_no = diff_line_no
