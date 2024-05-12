@@ -348,7 +348,7 @@ class PatchedFile(list):
                 extra_lines = []
                 diff_list = list(diff)  # Convert enumerate object to list
                 while (source_line_no > expected_source_end or
-                    target_line_no > expected_target_end):
+                       target_line_no > expected_target_end):
                     if diff_line_no < len(diff_list):
                         _, line = diff_list[diff_line_no]
                         if encoding is not None:
@@ -360,17 +360,17 @@ class PatchedFile(list):
                             break
                     else:
                         break
-
+        
                 # Calculate the number of extra lines to remove
                 extra_source_lines = source_line_no - expected_source_end
                 extra_target_lines = target_line_no - expected_target_end
                 total_extra_lines = extra_source_lines + extra_target_lines
-
+        
                 if len(extra_lines) >= total_extra_lines:
                     # Remove only the necessary number of whitespace lines
                     for i in range(total_extra_lines):
                         line_no, _ = extra_lines[i]
-                        diff_list.pop(line_no)
+                        diff_list.pop(line_no - i)  # Adjust the line number after removing previous lines
                     diff = enumerate(diff_list, start=1)
                     return self._parse_hunk(header, diff, encoding, metadata_only)
                 else:
